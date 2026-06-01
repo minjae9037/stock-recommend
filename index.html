@@ -132,6 +132,24 @@
   .rng:hover{border-color:var(--accent);color:var(--ink)}
   .rng.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .c-su{font-size:11px;color:var(--ink-faint);font-weight:600;margin-left:1px}
+  /* 홈 3단 레이아웃 */
+  .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  .col{min-width:0}
+  .col .sect-head{flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .col .sect-title{font-size:14px}
+  .col .sect-note{display:none}
+  .sect-tag.tech{background:rgba(139,127,240,.14);color:#7A6FE0;border:1px solid #8B7FF0}
+  .card.tech .c-rank{color:#7A6FE0}
+  .d-verdict.tech{background:rgba(139,127,240,.14);color:#7A6FE0}
+  .cols3 .card{padding:13px 14px;gap:10px;grid-template-columns:30px 1fr auto}
+  .cols3 .c-rank{font-size:18px}
+  .cols3 .c-name{font-size:15px}
+  .cols3 .c-mkt{display:none}
+  .cols3 .c-line{font-size:11.5px}
+  .cols3 .c-score{font-size:18px}
+  .cols3 .c-tgt{font-size:11.5px}
+  @media(max-width:820px){.cols3{grid-template-columns:1fr}.col .sect-note{display:inline}}
+
   /* 재무 건전성 */
   .hsec{margin-bottom:16px}
   .hsec-t{font-size:12px;font-weight:800;color:var(--ink-soft);margin-bottom:8px;display:flex;align-items:center;gap:6px}
@@ -184,14 +202,20 @@
   <!-- HOME -->
   <section id="view-home" class="view active">
     <h1 class="hero-title">이번 주, 어떤 주식을 살까?</h1>
-    <p class="hero-sub">거래량 상위 → 뉴스 모멘텀 → 재무 우량 → 주가 흐름 5단계 스크리닝으로 추린 추천입니다. 카드를 누르면 종목 상세 분석이 열립니다.</p>
-    <div class="sect">
-      <div class="sect-head"><span class="sect-tag buy">🟢 적극 매수</span><span class="sect-title">1년 내 상승 기대 TOP 5</span><span class="sect-note">저평가 + 펀더멘털 우선</span></div>
-      <div class="cards" id="cards-buy"></div>
-    </div>
-    <div class="sect">
-      <div class="sect-head"><span class="sect-tag surge">🚀 급상승 예상</span><span class="sect-title">3개월 내 단기 상승 TOP 5</span><span class="sect-note">모멘텀 + 호재 우선</span></div>
-      <div class="cards" id="cards-surge"></div>
+    <p class="hero-sub">세 가지 전략으로 추린 추천입니다 — <b>① 적극매수</b>(1년·저평가+펀더멘털) · <b>② 급상승</b>(3개월·모멘텀+호재) · <b>③ 기술적 반등</b>(저점 다지고 반등 임박). 카드를 누르면 종목 상세 분석이 열립니다.</p>
+    <div class="cols3">
+      <div class="col">
+        <div class="sect-head"><span class="sect-tag buy">🟢 적극 매수</span><span class="sect-title">1년 상승 TOP 5</span><span class="sect-note">저평가+펀더멘털</span></div>
+        <div class="cards" id="cards-buy"></div>
+      </div>
+      <div class="col">
+        <div class="sect-head"><span class="sect-tag surge">🚀 급상승</span><span class="sect-title">3개월 단기 TOP 5</span><span class="sect-note">모멘텀+호재</span></div>
+        <div class="cards" id="cards-surge"></div>
+      </div>
+      <div class="col">
+        <div class="sect-head"><span class="sect-tag tech">📉 기술적 반등</span><span class="sect-title">저점 반등 TOP 5</span><span class="sect-note">바닥 다지기·반등 임박</span></div>
+        <div class="cards" id="cards-tech"></div>
+      </div>
     </div>
     <div class="disc" id="disc"></div>
   </section>
@@ -209,7 +233,7 @@
 const DISC = '⚠️ 본 보고서는 공개 데이터(네이버 금융·DART) 기반 정보 제공물이며 투자 권유가 아닙니다. 과거·지연 데이터에 근거하며 실시간 시세와 다를 수 있습니다. 모든 투자 판단과 책임은 이용자 본인에게 있습니다. 자동매매·주문 실행 기능은 없습니다.';
 const fmtNum = n => (n==null||n==='')?'-':Number(String(n).replace(/[^\d.\-]/g,'')).toLocaleString();
 function pct(v){ if(v==null) return '-'; const c=v>=0?'pos':'neg'; return `<span class="${c}">${v>=0?'+':''}${v}%</span>`; }
-function findItem(code,kind){ const lists = kind==='surge' ? [REPORT.surge,REPORT.activeBuy] : [REPORT.activeBuy,REPORT.surge]; for(const l of lists){ const it=l.find(x=>x.code===code); if(it) return it; } return null; }
+function findItem(code,kind){ const T=REPORT.techRebound||[]; const lists = kind==='tech' ? [T,REPORT.surge,REPORT.activeBuy] : kind==='surge' ? [REPORT.surge,REPORT.activeBuy,T] : [REPORT.activeBuy,REPORT.surge,T]; for(const l of lists){ const it=l.find(x=>x.code===code); if(it) return it; } return null; }
 function toggleAcc(el){ el.parentElement.classList.toggle('open'); }
 
 function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
@@ -221,12 +245,13 @@ function card(it, kind, rank){
     <div><div class="c-name">${it.name}<span class="c-mkt">${(REPORT.stocks[it.code]||{}).market||''}</span></div>
       <div class="c-line">${it.cat}</div></div>
     <div class="c-right"><div class="c-score">${it.score}<span class="c-su">점</span></div><div class="c-tgt up">${(it.guide&&it.guide.targetPct)||''}</div>
-      <div class="c-meta">${kind==='buy'?'1년 목표':'3개월 목표'}</div></div>
+      <div class="c-meta">${kind==='buy'?'1년 목표':kind==='surge'?'3개월 목표':'반등 목표'}</div></div>
   </button>`;
 }
 function renderHome(){
   document.getElementById('cards-buy').innerHTML = REPORT.activeBuy.map((it,i)=>card(it,'buy',i+1)).join('');
   document.getElementById('cards-surge').innerHTML = REPORT.surge.map((it,i)=>card(it,'surge',i+1)).join('');
+  document.getElementById('cards-tech').innerHTML = (REPORT.techRebound||[]).map((it,i)=>card(it,'tech',i+1)).join('');
   document.getElementById('disc').textContent = DISC;
   document.getElementById('brand-meta').textContent = '분석일 '+REPORT.date;
 }
@@ -242,7 +267,8 @@ function openStock(code, kind){
   curCode=code; curKind=kind; curDays=66;
   const it = findItem(code,kind); const s = REPORT.stocks[code]||{}; const d=it.det||{}; const g=it.guide||{}; const h=s.health||{}; const pr=it.prob||{bull:30,base:50,bear:20};
   const isBuy = kind==='buy';
-  const kLabel = isBuy ? {cls:'buy',txt:'🟢 적극 매수 (1년)'} : {cls:'surge',txt:'🚀 급상승 (3개월)'};
+  const horizon = kind==='buy'?'1년':kind==='surge'?'3개월':'반등';
+  const kLabel = kind==='buy' ? {cls:'buy',txt:'🟢 적극 매수 (1년)'} : kind==='surge' ? {cls:'surge',txt:'🚀 급상승 (3개월)'} : {cls:'tech',txt:'📉 기술적 반등 (저점)'};
   const metricsHtml = `<div class="metrics">` + [
     ['현재가', s.price?s.price+'원':'-'],['PER (후행)', s.per||'-'],['PER (추정)', s.estPer||'-'],['PBR', s.pbr||'-'],
     ['배당수익률', s.div||'-'],['외인 비율', s.foreign||'-'],['52주 최고', s.hi52?s.hi52+'원':'-'],['52주 최저', s.lo52?s.lo52+'원':'-'],
@@ -293,7 +319,7 @@ function openStock(code, kind){
     <div class="d-head">
       <div><div class="d-name">${it.name}</div><div class="d-code">${code} · ${s.market||''}</div></div>
       <div class="d-badge"><div class="d-verdict ${kLabel.cls}">${kLabel.txt}</div>
-        <div class="d-tgt">${g.targetPct||''}<small>${isBuy?'1년':'3개월'} 기대 · 종합 ${it.score}점</small></div></div>
+        <div class="d-tgt">${g.targetPct||''}<small>${horizon} 기대 · 종합 ${it.score}점</small></div></div>
     </div>
     <div class="guide">
       <div class="panel-t" style="margin-bottom:12px">💵 매매 가이드</div>
