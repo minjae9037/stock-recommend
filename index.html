@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="data.js"></script>
 <script src="data-fsc.js"></script>
+<script src="runs.js"></script>
 <style>
   :root{
     --bg:#0B0F17; --bg-card:#141A24; --bg-soft:#1B232F; --line:#262F3D;
@@ -231,6 +232,49 @@
   @media(max-width:640px){.macro{grid-template-columns:repeat(3,1fr)}.macro .mc.read{grid-column:1/-1}.flow-grid{grid-template-columns:repeat(2,1fr)}}
   .src-tag{font-size:10px;color:var(--ink-faint);font-weight:500}
 
+  /* 검색 */
+  .search-wrap{margin-bottom:22px}
+  .search-bar{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;transition:.15s}
+  .search-bar:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,168,255,.12)}
+  .search-ic{font-size:16px;opacity:.7}
+  .search-bar input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:15px}
+  .search-bar input::placeholder{color:var(--ink-faint)}
+  .search-x{background:var(--bg-soft);border:none;color:var(--ink-soft);border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:12px}
+  .search-hint{font-size:11.5px;color:var(--ink-faint);margin-top:8px;line-height:1.5;padding-left:2px}
+  .search-hint b{color:var(--ink-soft)}
+  #searchResults{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+  .sr-card{background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .sr-h{font-size:14px;margin-bottom:12px;color:var(--ink-soft)}
+  .sr-h b{font-size:17px;color:var(--ink);font-weight:800}
+  .sr-h span{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-left:4px}
+  .sr-h small{color:var(--ink-faint);font-weight:400}
+  .sr-cur{font-weight:800;color:var(--ink)}
+  table.sr-t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.sr-t th{background:var(--bg-soft);color:var(--ink-faint);font-weight:700;padding:8px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.sr-t th:first-child,table.sr-t th:nth-child(2){text-align:left}
+  table.sr-t td{padding:9px;text-align:right;border-bottom:1px solid var(--line);font-family:var(--mono);color:var(--ink-soft)}
+  table.sr-t td:first-child,table.sr-t td:nth-child(2){text-align:left;font-family:var(--font)}
+  table.sr-t tr:last-child td{border-bottom:none}
+  table.sr-t tbody tr{cursor:pointer;transition:.1s}
+  table.sr-t tbody tr:hover td{background:var(--bg-soft)}
+  .acc-b2{font-weight:800;padding:2px 8px;border-radius:20px;font-size:11.5px;display:inline-block}
+  .acc-b2.hi{background:var(--green-bg);color:var(--green)} .acc-b2.lo{background:var(--bg-soft);color:var(--ink-soft)} .acc-b2.over{background:var(--green-bg);color:var(--green)}
+  .search-empty{font-size:13px;color:var(--ink-faint);padding:14px 4px;text-align:center}
+  /* 상세 추천 추적 바 */
+  .track-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:12.5px;color:var(--ink-soft)}
+  .track-bar b{color:var(--ink);font-family:var(--mono);font-weight:800}
+  .track-bar .tb-as{margin-left:auto;font-size:11px;color:var(--ink-faint)}
+  /* 분석 이력 버튼바 */
+  .runbar-wrap{margin-bottom:18px}
+  .runbar-label{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:9px}
+  .runbar-label span{color:var(--ink-faint);font-weight:400;font-size:11.5px}
+  .runbar{display:flex;gap:8px;flex-wrap:wrap}
+  .run-btn{background:var(--bg-card);border:1px solid var(--line);color:var(--ink-soft);border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:1px;align-items:flex-start;line-height:1.3}
+  .run-btn:hover{border-color:var(--accent);color:var(--ink)}
+  .run-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .run-btn .rb-d{font-family:var(--mono);font-size:13px;font-weight:800}
+  .run-btn .rb-t{font-size:10.5px;opacity:.8}
+
   .disc{font-size:11px;color:var(--ink-faint);line-height:1.7;border-top:1px solid var(--line);padding-top:18px;margin-top:30px}
   .theme-btn{position:fixed;bottom:22px;right:22px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--bg-card);color:var(--ink);font-size:18px;cursor:pointer;z-index:50;box-shadow:0 3px 12px rgba(0,0,0,.3)}
   @media(max-width:640px){.axes{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.card{grid-template-columns:38px 1fr auto;gap:10px}}
@@ -251,6 +295,24 @@
     <h1 class="hero-title">이번 주, 어떤 주식을 살까?</h1>
     <p class="hero-sub">세 가지 전략으로 추린 추천입니다 — <b>① 적극매수</b>(1년·저평가+펀더멘털) · <b>② 급상승</b>(3개월·모멘텀+호재) · <b>③ 기술적 반등</b>(저점 다지고 반등 임박). 카드를 누르면 종목 상세 분석이 열립니다.</p>
     <div id="home-macro"></div>
+
+    <!-- 추천 종목 검색 (적중도 추적) -->
+    <div class="search-wrap">
+      <div class="search-bar">
+        <span class="search-ic">🔎</span>
+        <input id="searchInput" type="text" autocomplete="off" placeholder="추천 종목 검색 — 예: 삼성전자 / 005930" oninput="onSearch()">
+        <button class="search-x" id="searchX" onclick="clearSearch()" style="display:none">✕</button>
+      </div>
+      <div class="search-hint">추천 이력·추천가 대비 현재 변화·<b>적중도</b>(현재가÷목표가×100 · 100%=목표 도달, 110%=초과, 90%=미달)를 보여줍니다.</div>
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- 분석 이력 (조사 시점별 버튼) -->
+    <div class="runbar-wrap">
+      <div class="runbar-label">📅 분석 이력 <span>— 시점을 누르면 그때의 추천이 열립니다</span></div>
+      <div class="runbar" id="runbar"></div>
+    </div>
+
     <div class="cols3">
       <div class="col">
         <div class="sect-head"><span class="sect-tag buy">🟢 적극 매수</span><span class="sect-title">1년 상승 TOP 5</span><span class="sect-note">저평가+펀더멘털</span></div>
@@ -284,25 +346,65 @@ function pct(v){ if(v==null) return '-'; const c=v>=0?'pos':'neg'; return `<span
 function findItem(code,kind){ const T=REPORT.techRebound||[]; const lists = kind==='tech' ? [T,REPORT.surge,REPORT.activeBuy] : kind==='surge' ? [REPORT.surge,REPORT.activeBuy,T] : [REPORT.activeBuy,REPORT.surge,T]; for(const l of lists){ const it=l.find(x=>x.code===code); if(it) return it; } return null; }
 function toggleAcc(el){ el.parentElement.classList.toggle('open'); }
 
+/* ── 분석 이력(RUNS) ── */
+const RUNLIST = (typeof RUNS!=='undefined' && RUNS.length) ? RUNS : [{id:REPORT.date.replace(/-/g,'')+'-0000',date:REPORT.date,time:'',label:REPORT.date,activeBuy:REPORT.activeBuy,surge:REPORT.surge,techRebound:REPORT.techRebound}];
+const CURPX = (typeof CURPRICE!=='undefined') ? CURPRICE : {};
+let curRunId=null;
+function latestRun(){ return RUNLIST[RUNLIST.length-1]; }
+function getRun(id){ return RUNLIST.find(r=>r.id===id) || latestRun(); }
+function findItemInRun(run,code,kind){ const map={buy:'activeBuy',surge:'surge',tech:'techRebound'}; const order=[map[kind]||'activeBuy','activeBuy','surge','techRebound']; const seen={}; for(const key of order){ if(seen[key])continue; seen[key]=1; const it=(run[key]||[]).find(x=>x.code===code); if(it) return it; } return null; }
+function renderRunButtons(){ const bar=document.getElementById('runbar'); if(!bar) return;
+  bar.innerHTML = RUNLIST.slice().reverse().map(r=>`<button class="run-btn${r.id===curRunId?' on':''}" onclick="selectRun('${r.id}')"><span class="rb-d">${r.date.replace(/-/g,'.')}</span><span class="rb-t">${r.time||''}</span></button>`).join(''); }
+function selectRun(id){ curRunId=id; renderHome(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+/* ── 추천 종목 검색 (적중도) ── */
+function fmtChg(v){ if(v==null) return '-'; const c=v>=0?'pos':'neg'; return `<span class="${c}">${v>=0?'+':''}${v.toFixed(1)}%</span>`; }
+function accBadge(a){ if(a==null) return '-'; const cls=a>=110?'over':a>=100?'hi':'lo'; return `<span class="acc-b2 ${cls}">${a}%</span>`; }
+function searchStock(q){ q=(q||'').trim().toLowerCase(); if(!q) return '';
+  const byCode={};
+  RUNLIST.forEach(run=>['activeBuy','surge','techRebound'].forEach(key=>(run[key]||[]).forEach(it=>{
+    if(it.name.toLowerCase().indexOf(q)>=0 || it.code.indexOf(q)>=0){ (byCode[it.code]=byCode[it.code]||[]).push({run,it}); } })));
+  const codes=Object.keys(byCode);
+  if(!codes.length) return '<div class="search-empty">해당 종목의 추천 이력이 없습니다. (추천된 종목명·코드로 검색하세요)</div>';
+  return codes.map(code=>{
+    const arr=byCode[code].sort((a,b)=>a.run.id.localeCompare(b.run.id));
+    const name=arr[0].it.name; const cp=CURPX[code]||{}; const cur=cp.price;
+    const rows=arr.map(h=>{ const rec=h.it.recPrice, tgt=h.it.target;
+      const chg=(cur&&rec)?((cur-rec)/rec*100):null; const acc=(cur&&tgt)?Math.round(cur/tgt*100):null;
+      const kl={buy:'🟢 적극매수',surge:'🚀 급상승',tech:'📉 기술반등'}[h.it.kind]||h.it.kind;
+      return `<tr onclick="openStock('${code}','${h.it.kind}','${h.run.id}')">
+        <td>${h.run.date.replace(/-/g,'.')} ${h.run.time||''}</td><td>${kl}</td>
+        <td>${rec?rec.toLocaleString():'-'}원</td><td>${tgt?tgt.toLocaleString():'-'}원</td>
+        <td>${fmtChg(chg)}</td><td>${accBadge(acc)}</td></tr>`; }).join('');
+    return `<div class="sr-card"><div class="sr-h"><b>${name}</b><span>${code}</span> · 추천 <b>${arr.length}</b>회 · 현재가 <span class="sr-cur">${cur?cur.toLocaleString()+'원':'-'}</span> <small>(${cp.asOf||''} 기준)</small></div>
+      <table class="sr-t"><thead><tr><th>분석 시점</th><th>구분</th><th>추천가</th><th>목표가</th><th>현재 변화</th><th>적중도</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }).join('');
+}
+function onSearch(){ const v=document.getElementById('searchInput').value; document.getElementById('searchResults').innerHTML=searchStock(v); document.getElementById('searchX').style.display=v?'block':'none'; }
+function clearSearch(){ const i=document.getElementById('searchInput'); i.value=''; onSearch(); i.focus(); }
+
 function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
 function showHome(){ renderHome(); showView('view-home'); }
 
-function card(it, kind, rank){
-  return `<button class="card ${kind}" onclick="openStock('${it.code}','${kind}')">
+function card(it, kind, rank, runId){
+  return `<button class="card ${kind}" onclick="openStock('${it.code}','${kind}','${runId}')">
     <div class="c-rank">${rank}</div>
     <div><div class="c-name">${it.name}<span class="c-mkt">${(REPORT.stocks[it.code]||{}).market||''}</span></div>
       <div class="c-line">${it.cat}</div></div>
-    <div class="c-right"><div class="c-score">${it.score}<span class="c-su">점</span></div><div class="c-tgt up">${(it.guide&&it.guide.targetPct)||''}</div>
+    <div class="c-right"><div class="c-score">${it.score}<span class="c-su">점</span></div><div class="c-tgt up">${(it.guide&&it.guide.targetPct)||it.targetPct||''}</div>
       <div class="c-meta">${kind==='buy'?'1년 목표':kind==='surge'?'3개월 목표':'반등 목표'}</div></div>
   </button>`;
 }
 function renderHome(){
-  document.getElementById('cards-buy').innerHTML = REPORT.activeBuy.map((it,i)=>card(it,'buy',i+1)).join('');
-  document.getElementById('cards-surge').innerHTML = REPORT.surge.map((it,i)=>card(it,'surge',i+1)).join('');
-  document.getElementById('cards-tech').innerHTML = (REPORT.techRebound||[]).map((it,i)=>card(it,'tech',i+1)).join('');
+  if(!curRunId) curRunId = latestRun().id;
+  const run = getRun(curRunId);
+  document.getElementById('cards-buy').innerHTML = (run.activeBuy||[]).map((it,i)=>card(it,'buy',i+1,run.id)).join('');
+  document.getElementById('cards-surge').innerHTML = (run.surge||[]).map((it,i)=>card(it,'surge',i+1,run.id)).join('');
+  document.getElementById('cards-tech').innerHTML = (run.techRebound||[]).map((it,i)=>card(it,'tech',i+1,run.id)).join('');
+  renderRunButtons();
   document.getElementById('disc').textContent = DISC;
   document.getElementById('brand-meta').textContent = '분석일 '+REPORT.date;
-  const hm=document.getElementById('home-macro'); if(hm) hm.innerHTML = REPORT.macro ? `<div style="margin-bottom:20px">${macroPanel()}</div>` : '';
+  const hm=document.getElementById('home-macro'); if(hm) hm.innerHTML = REPORT.macro ? `<div style="margin-bottom:22px">${macroPanel()}</div>` : '';
 }
 
 let chartP=null, chartV=null, chartF=null, chartS=null, curCode=null, curKind=null, curDays=66;
@@ -365,9 +467,11 @@ function divPanel(s){ const dv=s.fsc&&s.fsc.div; if(!dv||!dv.length||!dv.some(d=
 function discPanel(s){ const dc=s.fsc&&s.fsc.disc; if(!dc||!dc.length) return '';
   const rows=dc.map(e=>`<div class="tl-row"><div class="tl-d">${fmtYmd(e.d)}</div><div class="tl-t">${e.t}</div><div class="tl-f ${e.f}">${e.f==='POS'?'호재':e.f==='NEG'?'악재':'중립'}</div></div>`).join('');
   return `<div class="panel"><div class="panel-t">📑 법정 공시 이벤트 <span class="src-tag">· 금융위원회 (자사주·증자·감자 등 구조화 공시)</span></div><div class="tl">${rows}</div></div>`; }
-function openStock(code, kind){
+function openStock(code, kind, runId){
   curCode=code; curKind=kind; curDays=66;
-  const it = findItem(code,kind); const s = REPORT.stocks[code]||{}; const d=it.det||{}; const g=it.guide||{}; const h=s.health||{}; const pr=it.prob||{bull:30,base:50,bear:20};
+  const run = getRun(runId); curRunId = run.id;
+  const it = findItemInRun(run,code,kind) || findItem(code,kind); if(!it) return;
+  const s = REPORT.stocks[code]||{}; const d=it.det||{}; const g=it.guide||{}; const h=s.health||{}; const pr=it.prob||{bull:30,base:50,bear:20};
   const isBuy = kind==='buy';
   const horizon = kind==='buy'?'1년':kind==='surge'?'3개월':'반등';
   const kLabel = kind==='buy' ? {cls:'buy',txt:'🟢 적극 매수 (1년)'} : kind==='surge' ? {cls:'surge',txt:'🚀 급상승 (3개월)'} : {cls:'tech',txt:'📉 기술적 반등 (저점)'};
@@ -419,10 +523,13 @@ function openStock(code, kind){
     </div></div>`;
   document.getElementById('detail-body').innerHTML = `
     <div class="d-head">
-      <div><div class="d-name">${it.name}</div><div class="d-code">${code} · ${s.market||''}</div></div>
+      <div><div class="d-name">${it.name}</div><div class="d-code">${code} · ${s.market||''} · ${run.label} 분석</div></div>
       <div class="d-badge"><div class="d-verdict ${kLabel.cls}">${kLabel.txt}</div>
         <div class="d-tgt">${g.targetPct||''}<small>${horizon} 기대 · 종합 ${it.score}점</small></div></div>
     </div>
+    ${(function(){ const cp=CURPX[code]||{}, cur=cp.price, rec=it.recPrice, tgt=it.target; if(!cur||!rec) return '';
+      const chg=((cur-rec)/rec*100), acc=tgt?Math.round(cur/tgt*100):null;
+      return `<div class="track-bar"><span>📌 추천가 <b>${rec.toLocaleString()}원</b></span><span>→ 현재 <b>${cur.toLocaleString()}원</b> ${fmtChg(chg)}</span>${acc!=null?`<span>목표 대비 적중도 ${accBadge(acc)}</span>`:''}<span class="tb-as">${cp.asOf||''} 기준</span></div>`; })()}
     <div class="guide">
       <div class="panel-t" style="margin-bottom:12px">💵 매매 가이드</div>
       <div class="guide-row">
