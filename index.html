@@ -33,7 +33,10 @@
   .brand-mark{font-size:22px;font-weight:800;letter-spacing:-.02em}
   .brand-mark .ac{color:var(--accent)}
   .brand-tag{font-size:12px;color:var(--ink-faint);margin-top:3px;letter-spacing:.04em}
-  .brand-meta{font-size:12px;color:var(--ink-soft);text-align:right}
+  .brand-meta{font-size:12px;color:var(--ink-soft);text-align:right;margin-top:7px}
+  .nav-link{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:9px;padding:8px 14px;transition:.13s;background:var(--bg-card)}
+  .nav-link:hover{background:var(--accent);color:#fff}
+  .nav-link .ext{font-size:11px}
 
   .hero-title{font-size:27px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
   .hero-sub{font-size:13.5px;color:var(--ink-soft);margin-bottom:26px;line-height:1.7}
@@ -287,7 +290,10 @@
       <div class="brand-mark">Stock<span class="ac">Recommend</span></div>
       <div class="brand-tag">한국 주식 스크리닝 · 추천 엔진</div>
     </div>
-    <div class="brand-meta" id="brand-meta">분석일 2026-06-01</div>
+    <div>
+      <a class="nav-link" href="https://minjae9037.github.io/stock-dashboard/" target="_blank" rel="noopener">🔬 종목 심층분석 <span class="ext">↗</span></a>
+      <div class="brand-meta" id="brand-meta">분석일 2026-06-01</div>
+    </div>
   </header>
 
   <!-- HOME -->
