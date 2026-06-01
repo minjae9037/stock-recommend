@@ -137,6 +137,13 @@
   .rng:hover{border-color:var(--accent);color:var(--ink)}
   .rng.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .c-su{font-size:11px;color:var(--ink-faint);font-weight:600;margin-left:1px}
+  /* 볼린저밴드 범례 */
+  .bb-leg{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--ink-soft)}
+  .bb-leg .bbk{display:inline-flex;align-items:center;gap:5px}
+  .bb-leg i{display:inline-block;width:16px;height:0;border-top-width:2px;border-top-style:solid}
+  .bb-leg .l-price{border-top-color:#5BA8FF;border-top-width:2px}
+  .bb-leg .l-mid{border-top-color:var(--gold);border-top-style:dashed}
+  .bb-leg .l-band{width:14px;height:10px;border:1px solid var(--line);background:rgba(91,168,255,.10);border-top:none}
   /* 홈 3단 레이아웃 */
   .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
   .col{min-width:0}
@@ -552,6 +559,7 @@ function openStock(code, kind, runId){
     ${flowPanel(s)}
     <div class="panel"><div class="panel-t">주가 · 거래량 <span style="color:var(--ink-faint);font-weight:400;font-size:11px">· 기간 선택 · 마우스 올리면 상세값</span></div>
       <div class="rng-bar">${rangeBtns}</div>
+      <div class="bb-leg"><span class="bbk"><i class="l-price"></i>종가</span><span class="bbk"><i class="l-mid"></i>20일 이동평균</span><span class="bbk"><i class="l-band"></i>볼린저밴드 (20 · 2σ)</span></div>
       <div class="chart-box"><canvas id="cP"></canvas></div>
       <div class="chart-box vol"><canvas id="cV"></canvas></div></div>
     ${finHtml}
@@ -574,8 +582,25 @@ function openStock(code, kind, runId){
 }
 function setRange(days,btn){ curDays=days; document.querySelectorAll('.rng').forEach(b=>b.classList.remove('on')); if(btn)btn.classList.add('on'); drawCharts(curCode,days); }
 function won(v){ return v>=1000000 ? (v/10000).toFixed(0)+'만' : v>=10000 ? (v/10000).toFixed(1)+'만' : v.toLocaleString(); }
+// 볼린저 밴드(20기간·2σ) — 전체 시계열에 대해 계산 후 표시 구간만 슬라이스(창 시작점도 정확)
+function computeBB(closes, period, mult){
+  const mid=[], up=[], lo=[];
+  for(let i=0;i<closes.length;i++){
+    if(i<period-1){ mid.push(null); up.push(null); lo.push(null); continue; }
+    let s=0; for(let j=i-period+1;j<=i;j++) s+=closes[j];
+    const m=s/period;
+    let v=0; for(let j=i-period+1;j<=i;j++){ const d=closes[j]-m; v+=d*d; }
+    const sd=Math.sqrt(v/period);
+    mid.push(Math.round(m)); up.push(Math.round(m+mult*sd)); lo.push(Math.round(m-mult*sd));
+  }
+  return {mid,up,lo};
+}
 function drawCharts(code,days){
-  let oh = REPORT.ohlcv[code]||[]; if(days && days<oh.length) oh=oh.slice(-days);
+  const fullOh = REPORT.ohlcv[code]||[];
+  const bb = computeBB(fullOh.map(p=>p.c), 20, 2);                 // 전체 기준 계산
+  const start = (days && days<fullOh.length) ? fullOh.length-days : 0;
+  const oh = fullOh.slice(start);
+  const bbUp=bb.up.slice(start), bbLo=bb.lo.slice(start), bbMid=bb.mid.slice(start);
   const light = document.documentElement.getAttribute('data-theme')==='light';
   const grid = light?'#E2E7EF':'#222B38'; const tk=light?'#5A6677':'#7C8696';
   const short = (days||9999)<=66;
@@ -585,8 +610,15 @@ function drawCharts(code,days){
   if(chartP)chartP.destroy(); if(chartV)chartV.destroy();
   const tip={enabled:true,backgroundColor:light?'#fff':'#1B232F',titleColor:light?'#16202E':'#E8EDF4',bodyColor:light?'#41506A':'#AEB8C7',borderColor:'#5BA8FF',borderWidth:1,padding:10,displayColors:false};
   const inter={mode:'index',intersect:false};
-  chartP=new Chart(document.getElementById('cP'),{type:'line',data:{labels:disp,datasets:[{label:'종가',data:price,borderColor:'#5BA8FF',backgroundColor:'rgba(91,168,255,.10)',borderWidth:1.8,fill:true,pointRadius:short?2:0,pointHoverRadius:5,pointHoverBackgroundColor:'#5BA8FF',tension:.12}]},
-    options:{responsive:true,maintainAspectRatio:false,interaction:inter,plugins:{legend:{display:false},tooltip:{...tip,callbacks:{title:c=>full[c[0].dataIndex],label:c=>'종가  '+c.parsed.y.toLocaleString()+'원'}}},scales:{x:{ticks:{color:tk,maxTicksLimit:8,font:{size:10}},grid:{display:false}},y:{position:'right',ticks:{color:tk,font:{size:10},callback:won},grid:{color:grid}}}}});
+  const bbLine=light?'rgba(120,140,170,.55)':'rgba(150,160,180,.5)';
+  const bbFill=light?'rgba(91,168,255,.08)':'rgba(91,168,255,.07)';
+  chartP=new Chart(document.getElementById('cP'),{type:'line',data:{labels:disp,datasets:[
+    {label:'BB 상단',data:bbUp,borderColor:bbLine,borderWidth:1,borderDash:[2,3],pointRadius:0,fill:'+1',backgroundColor:bbFill,tension:.1,spanGaps:true},
+    {label:'BB 하단',data:bbLo,borderColor:bbLine,borderWidth:1,borderDash:[2,3],pointRadius:0,fill:false,tension:.1,spanGaps:true},
+    {label:'BB 중심(20MA)',data:bbMid,borderColor:light?'rgba(224,166,90,.85)':'rgba(224,166,90,.75)',borderWidth:1.2,borderDash:[5,3],pointRadius:0,fill:false,tension:.1,spanGaps:true},
+    {label:'종가',data:price,borderColor:'#5BA8FF',backgroundColor:'rgba(91,168,255,.10)',borderWidth:1.8,fill:false,pointRadius:short?2:0,pointHoverRadius:5,pointHoverBackgroundColor:'#5BA8FF',tension:.12}
+  ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:inter,plugins:{legend:{display:false},tooltip:{...tip,filter:i=>i.parsed.y!=null,callbacks:{title:c=>full[c[0].dataIndex],label:c=>c.dataset.label+'  '+c.parsed.y.toLocaleString()+'원'}}},scales:{x:{ticks:{color:tk,maxTicksLimit:8,font:{size:10}},grid:{display:false}},y:{position:'right',ticks:{color:tk,font:{size:10},callback:won},grid:{color:grid}}}}});
   chartV=new Chart(document.getElementById('cV'),{type:'bar',data:{labels:disp,datasets:[{label:'거래량',data:vol,backgroundColor:light?'rgba(120,140,170,.5)':'rgba(124,134,150,.5)',hoverBackgroundColor:'#5BA8FF'}]},
     options:{responsive:true,maintainAspectRatio:false,interaction:inter,plugins:{legend:{display:false},tooltip:{...tip,callbacks:{title:c=>full[c[0].dataIndex],label:c=>'거래량  '+c.parsed.y.toLocaleString()+'주'}}},scales:{x:{display:false},y:{position:'right',ticks:{color:tk,font:{size:9},maxTicksLimit:3,callback:v=>v>=1000000?(v/1000000).toFixed(0)+'M':(v/1000).toFixed(0)+'K'},grid:{color:grid}}}}});
 }
