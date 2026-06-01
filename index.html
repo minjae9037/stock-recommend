@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stock Recommend · 한국 주식 추천</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js"></script>
-<script src="data-fsc.js"></script>
-<script src="runs.js"></script>
+<script>
+/* 항상 최신: 접속 시각으로 캐시버스팅 → 모바일/PC 모두 즉시 반영. 로드 순서 보장(document.write 동기 실행). */
+(function(){var t=Date.now();['data.js','data-fsc.js','runs.js'].forEach(function(f){document.write('<script src="'+f+'?t='+t+'"><\/script>');});})();
+</script>
 <style>
   :root{
     --bg:#0B0F17; --bg-card:#141A24; --bg-soft:#1B232F; --line:#262F3D;
