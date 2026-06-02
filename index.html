@@ -558,7 +558,7 @@ function gotoSecStock(code){ var rec=recRunFor(code);
   window.open('https://m.stock.naver.com/domestic/stock/'+code+'/total','_blank'); }
 function openSector(i){ if(!MKT||!MKT.sectors[i]) return; var x=MKT.sectors[i];
   var up=x.items.filter(function(s){return s.p>0;}), dn=x.items.filter(function(s){return s.p<0;}), fl=x.items.filter(function(s){return !s.p;});
-  function row(s){ var clk=s.c?' clk" onclick="gotoSecStock(\''+s.c+'\')':'"'; var d=s.c?secDest(s.c):null;
+  function row(s){ var clk=s.c?' clk" onclick="gotoSecStock(\''+s.c+'\')"':'"'; var d=s.c?secDest(s.c):null;
     return '<div class="secm-row'+clk+'><span class="nm">'+s.n+(d?' <span class="secm-dest '+d.c+'">'+d.t+'</span>':'')+'</span>'
       +'<span style="display:flex;align-items:center"><span class="pc '+mSignCls(s.p)+'">'+(s.p>0?'+':'')+(s.p!=null?Number(s.p).toFixed(2):'0.00')+'%</span>'+(s.c?'<span class="go">›</span>':'')+'</span></div>'; }
   var none='<div class="secm-row" style="color:var(--ink-faint);border:none">없음</div>';
