@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 /* 항상 최신: 접속 시각으로 캐시버스팅 → 모바일/PC 모두 즉시 반영. 로드 순서 보장(document.write 동기 실행). */
-(function(){var t=Date.now();['data.js','data-fsc.js','runs.js'].forEach(function(f){document.write('<script src="'+f+'?t='+t+'"><\/script>');});})();
+(function(){var t=Date.now();['data.js','data-fsc.js','runs.js','market.js'].forEach(function(f){document.write('<script src="'+f+'?t='+t+'"><\/script>');});})();
 </script>
 <style>
   :root{
@@ -63,6 +63,11 @@
   .c-tgt{font-size:12px;font-weight:700;margin-top:2px}
   .c-tgt.up{color:var(--green)}
   .c-meta{font-size:10.5px;color:var(--ink-faint);margin-top:2px}
+  .c-px{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:3px 12px;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;font-family:var(--mono);color:var(--ink-soft);font-weight:600}
+  .c-px i{font-style:normal;color:var(--ink-faint);margin-right:3px;font-family:inherit;font-size:10px;font-weight:700}
+  .c-px i.g{margin-left:9px}
+  .c-pxr{margin-left:auto}
+  .c-flat{color:var(--ink-faint)}
 
   /* detail */
   .back{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:9px;padding:8px 13px;font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:20px}
@@ -146,10 +151,11 @@
   .bb-leg .l-mid{border-top-color:var(--gold);border-top-style:dashed}
   .bb-leg .l-band{width:14px;height:10px;border:1px solid var(--line);background:rgba(91,168,255,.10);border-top:none}
   /* 홈 3단 레이아웃 */
-  .cols3{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
+  .cols3{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-bottom:20px}
   .col{min-width:0}
-  .col .sect-head{flex-wrap:wrap;gap:6px;margin-bottom:12px}
-  .col .sect-title{font-size:14px}
+  .col .sect-head{flex-wrap:wrap;gap:5px;margin-bottom:12px}
+  .col .sect-title{font-size:13px;white-space:nowrap}
+  .sect-tag{white-space:nowrap}
   .col .sect-note{display:none}
   .sect-tag.tech{background:rgba(139,127,240,.14);color:#7A6FE0;border:1px solid #8B7FF0}
   .card.tech .c-rank{color:#7A6FE0}
@@ -164,6 +170,9 @@
   .cols3 .c-line{font-size:11.5px}
   .cols3 .c-score{font-size:18px}
   .cols3 .c-tgt{font-size:11.5px}
+  .cols3 .c-px{font-size:10.5px;gap:2px 9px;margin-top:8px}
+  .cols3 .c-px i{font-size:9px}
+  .cols3 .c-px .c-pxr{margin-left:0;flex-basis:100%;margin-top:2px}
   @media(max-width:1100px){.cols3{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:560px){.cols3{grid-template-columns:1fr}.col .sect-note{display:inline}}
 
@@ -293,6 +302,33 @@
   .disc{font-size:11px;color:var(--ink-faint);line-height:1.7;border-top:1px solid var(--line);padding-top:18px;margin-top:30px}
   .theme-btn{position:fixed;bottom:22px;right:22px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--bg-card);color:var(--ink);font-size:18px;cursor:pointer;z-index:50;box-shadow:0 3px 12px rgba(0,0,0,.3)}
   @media(max-width:640px){.axes{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.card{grid-template-columns:38px 1fr auto;gap:10px}}
+
+  /* ===== 시장 현황 ===== */
+  .market{margin:0 0 22px;background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px}
+  .mhead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  .mhead h2{font-size:16px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px}
+  .mhead .masof{font-size:11px;color:var(--ink-faint);font-weight:600}
+  .idxtabs{display:flex;gap:6px}
+  .itab{background:var(--bg-soft);border:1px solid var(--line);color:var(--ink-faint);border-radius:99px;padding:5px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .itab.on{background:var(--accent);color:#fff;border-color:transparent}
+  .mgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+  @media(max-width:760px){ .mgrid{grid-template-columns:1fr} }
+  .mcard{background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .idxnow{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .idxnow .iv{font-size:24px;font-weight:800;letter-spacing:-.01em;font-family:var(--mono)}
+  .idxnow .ic{font-size:14px;font-weight:800}
+  .idxnow .il{font-size:12px;color:var(--ink-faint);font-weight:700;margin-right:2px}
+  .market .up{color:#e0556a} .market .down{color:#3b82f6} .market .flat{color:var(--ink-faint)}
+  .mchart-wrap{position:relative;height:190px;margin-top:4px}
+  .mcap{font-size:10.5px;color:var(--ink-faint);margin-top:7px}
+  .sechead{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:9px}
+  .sechead span{font-size:11px;color:var(--ink-faint);font-weight:600}
+  .secgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;max-height:230px;overflow-y:auto;padding-right:3px}
+  @media(max-width:480px){ .secgrid{grid-template-columns:1fr} }
+  .sec{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 9px;border-radius:8px;border:1px solid var(--line);font-size:12px}
+  .sec .sn{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sec .sp{font-weight:800;flex-shrink:0;font-variant-numeric:tabular-nums}
+  .sec .sc{font-size:10px;color:var(--ink-faint);flex-shrink:0;margin-left:2px}
 </style>
 </head>
 <body>
@@ -312,6 +348,27 @@
   <section id="view-home" class="view active">
     <h1 class="hero-title">이번 주, 어떤 주식을 살까?</h1>
     <p class="hero-sub">네 가지 전략으로 추린 추천입니다 — <b>🚀 시장 주도주</b>(상승 주도 대형 우량주) · <b>① 적극매수</b>(1년·저평가+펀더멘털) · <b>② 저평가 가치주</b>(저PER/PBR·전환 초입) · <b>③ 기술적 반등</b>(저점 다지고 반등 임박). 건전한 대형 주도주는 포함하되, 중소형 단기 급등의 추격매수는 지양합니다. 카드를 누르면 종목 상세 분석이 열립니다.</p>
+    <section class="market" id="market">
+      <div class="mhead">
+        <h2>🧭 시장 현황 <span class="masof" id="masof"></span></h2>
+        <div class="idxtabs">
+          <button class="itab on" data-ix="kospi" onclick="setIndex('kospi')">코스피</button>
+          <button class="itab" data-ix="kosdaq" onclick="setIndex('kosdaq')">코스닥</button>
+        </div>
+      </div>
+      <div class="mgrid">
+        <div class="mcard">
+          <div class="idxnow" id="idxnow"></div>
+          <div class="mchart-wrap"><canvas id="idxChart"></canvas></div>
+          <div class="mcap">최근 1년 지수 추이(일봉) · 네이버 금융</div>
+        </div>
+        <div class="mcard">
+          <div class="sechead"><b>📊 업종별 등락</b><span id="secsum"></span></div>
+          <div class="secgrid" id="secgrid"></div>
+        </div>
+      </div>
+    </section>
+
     <div id="home-macro"></div>
 
     <!-- 추천 종목 검색 (적중도 추적) -->
@@ -333,19 +390,19 @@
 
     <div class="cols3">
       <div class="col">
-        <div class="sect-head"><span class="sect-tag leader">🚀 시장 주도주</span><span class="sect-title">상승 주도 대형주 TOP 5</span><span class="sect-note">대형 우량·강한 모멘텀</span></div>
+        <div class="sect-head"><span class="sect-tag leader">🚀 시장 주도주</span><span class="sect-title">주도 대형주 TOP5</span><span class="sect-note">대형 우량·강한 모멘텀</span></div>
         <div class="cards" id="cards-leader"></div>
       </div>
       <div class="col">
-        <div class="sect-head"><span class="sect-tag buy">🟢 적극 매수</span><span class="sect-title">1년 상승 TOP 5</span><span class="sect-note">저평가+펀더멘털</span></div>
+        <div class="sect-head"><span class="sect-tag buy">🟢 적극 매수</span><span class="sect-title">1년 상승 TOP5</span><span class="sect-note">저평가+펀더멘털</span></div>
         <div class="cards" id="cards-buy"></div>
       </div>
       <div class="col">
-        <div class="sect-head"><span class="sect-tag surge">💎 저평가 가치주</span><span class="sect-title">펀더멘털 우량·저평가 TOP 5</span><span class="sect-note">저PER/PBR·미급등</span></div>
+        <div class="sect-head"><span class="sect-tag surge">💎 저평가 가치주</span><span class="sect-title">저평가 TOP5</span><span class="sect-note">저PER/PBR·전환초입</span></div>
         <div class="cards" id="cards-surge"></div>
       </div>
       <div class="col">
-        <div class="sect-head"><span class="sect-tag tech">📉 기술적 반등</span><span class="sect-title">저점 반등 TOP 5</span><span class="sect-note">바닥 다지기·반등 임박</span></div>
+        <div class="sect-head"><span class="sect-tag tech">📉 기술적 반등</span><span class="sect-title">저점 반등 TOP5</span><span class="sect-note">바닥 다지기·반등 임박</span></div>
         <div class="cards" id="cards-tech"></div>
       </div>
     </div>
@@ -408,15 +465,59 @@ function clearSearch(){ const i=document.getElementById('searchInput'); i.value=
 function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
 function showHome(){ renderHome(); showView('view-home'); }
 
+function won(v){ return (v||v===0)? Number(v).toLocaleString()+'원' : '-'; }
+function sgn(v){ return v==null?'<span class="c-flat">-</span>':`<span class="${v>=0?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(1)}%</span>`; }
 function card(it, kind, rank, runId){
+  const rec=it.recPrice, tgt=it.target, cur=(CURPX[it.code]||{}).price;
+  const ret=(cur&&rec)?((cur-rec)/rec*100):null;   // 수익률(추천가 대비 현재)
+  const gap=(cur&&tgt)?((tgt-cur)/cur*100):null;    // 갭(현재가→목표가 상승여력)
   return `<button class="card ${kind}" onclick="openStock('${it.code}','${kind}','${runId}')">
     <div class="c-rank">${rank}</div>
     <div><div class="c-name">${it.name}<span class="c-mkt">${(REPORT.stocks[it.code]||{}).market||''}</span></div>
       <div class="c-line">${it.cat}</div></div>
     <div class="c-right"><div class="c-score">${it.score}<span class="c-su">점</span></div><div class="c-tgt up">${(it.guide&&it.guide.targetPct)||it.targetPct||''}</div>
       <div class="c-meta">${kind==='leader'?'주도 목표':kind==='buy'?'1년 목표':kind==='surge'?'가치 목표':'반등 목표'}</div></div>
+    <div class="c-px">
+      <span class="c-pxi"><i>추천</i>${won(rec)}</span><span class="c-pxi"><i>현재</i>${won(cur)}</span><span class="c-pxi"><i>목표</i>${won(tgt)}</span>
+      <span class="c-pxr"><i>수익</i>${sgn(ret)}<i class="g">갭</i>${sgn(gap)}</span>
+    </div>
   </button>`;
 }
+/* ── 시장 현황 (market.js) ── */
+var MKT = (typeof MARKET !== 'undefined') ? MARKET : null;
+var curIndex = 'kospi'; var idxChart = null;
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888'; }
+function mSignCls(p){ return p>0.005 ? 'up' : (p<-0.005 ? 'down' : 'flat'); }
+function mSignTxt(p){ var s=p>0?'▲':(p<0?'▼':'-'); return s+' '+Math.abs(p).toFixed(2)+'%'; }
+function renderIndexHead(){ if(!MKT) return; var d=MKT[curIndex]; if(!d) return;
+  document.getElementById('idxnow').innerHTML =
+    '<span class="il">'+(curIndex==='kospi'?'코스피':'코스닥')+'</span>'
+    +'<span class="iv">'+Number(d.value).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span>'
+    +'<span class="ic '+mSignCls(d.changePct)+'">'+mSignTxt(d.changePct)+'</span>'; }
+function renderIndexChart(){ if(!MKT||typeof Chart==='undefined') return; var d=MKT[curIndex]; if(!d||!d.ohlc||!d.ohlc.length) return;
+  var labels=d.ohlc.map(function(p){return p[0];}); var vals=d.ohlc.map(function(p){return p[1];});
+  var rise=vals[vals.length-1]>=vals[0]; var line=rise?'#e0556a':'#3b82f6';
+  var ctx=document.getElementById('idxChart').getContext('2d');
+  var grad=ctx.createLinearGradient(0,0,0,190);
+  grad.addColorStop(0, rise?'rgba(224,85,106,0.22)':'rgba(59,130,246,0.22)'); grad.addColorStop(1,'rgba(0,0,0,0)');
+  if(idxChart) idxChart.destroy();
+  idxChart=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:(curIndex==='kospi'?'코스피':'코스닥'),data:vals,borderColor:line,backgroundColor:grad,borderWidth:1.6,pointRadius:0,pointHoverRadius:4,fill:true,tension:0.12}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y.toLocaleString('ko-KR',{maximumFractionDigits:2});}}}},
+      scales:{x:{ticks:{maxTicksLimit:6,color:cssVar('--ink-faint'),font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:cssVar('--ink-faint'),font:{size:10},callback:function(v){return Number(v).toLocaleString('ko-KR');}},grid:{color:cssVar('--line')}}}}}); }
+function renderSectors(){ if(!MKT||!MKT.sectors) return; var s=MKT.sectors;
+  var up=s.filter(function(x){return x.changePct>0;}).length; var dn=s.filter(function(x){return x.changePct<0;}).length;
+  document.getElementById('secsum').textContent='상승 '+up+' · 하락 '+dn+' / '+s.length+'개 업종';
+  function bg(p){ var a=Math.min(0.18,0.04+Math.abs(p)*0.05).toFixed(3); if(p>0) return 'rgba(224,85,106,'+a+')'; if(p<0) return 'rgba(59,130,246,'+a+')'; return 'transparent'; }
+  document.getElementById('secgrid').innerHTML=s.map(function(x){
+    return '<div class="sec" style="background:'+bg(x.changePct)+'"><span class="sn" title="'+x.name+'">'+x.name+'</span>'
+      +'<span><span class="sp '+mSignCls(x.changePct)+'">'+(x.changePct>0?'+':'')+x.changePct.toFixed(2)+'%</span>'
+      +'<span class="sc">'+x.rise+'↑'+x.fall+'↓</span></span></div>'; }).join(''); }
+function setIndex(ix){ curIndex=ix; var tabs=document.querySelectorAll('.itab'); for(var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('on', tabs[i].getAttribute('data-ix')===ix); } renderIndexHead(); renderIndexChart(); }
+function renderMarket(){ if(!MKT){ var m=document.getElementById('market'); if(m) m.style.display='none'; return; }
+  document.getElementById('masof').textContent='기준 '+MKT.asOf; renderIndexHead(); renderSectors(); renderIndexChart(); }
+
 function renderHome(){
   if(!curRunId) curRunId = latestRun().id;
   const run = getRun(curRunId);
@@ -428,6 +529,7 @@ function renderHome(){
   document.getElementById('disc').textContent = DISC;
   document.getElementById('brand-meta').textContent = '분석일 '+REPORT.date;
   const hm=document.getElementById('home-macro'); if(hm) hm.innerHTML = REPORT.macro ? `<div style="margin-bottom:22px">${macroPanel()}</div>` : '';
+  renderMarket();
 }
 
 let chartP=null, chartV=null, chartF=null, chartS=null, curCode=null, curKind=null, curDays=66;
