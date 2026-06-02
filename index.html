@@ -344,9 +344,18 @@
   .secm-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
   @media(max-width:520px){.secm-cols{grid-template-columns:1fr}}
   .secm-col h4{font-size:12.5px;font-weight:800;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-  .secm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 3px;border-bottom:1px dashed var(--line);font-size:13px}
-  .secm-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .secm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 5px;border-bottom:1px dashed var(--line);font-size:13px;border-radius:7px}
+  .secm-row.clk{cursor:pointer}
+  .secm-row.clk:hover{background:var(--bg-soft)}
+  .secm-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px;min-width:0}
   .secm-row .pc{font-weight:800;font-variant-numeric:tabular-nums;flex-shrink:0;margin-left:8px}
+  .secm-dest{font-size:9px;font-weight:800;border-radius:99px;padding:1px 6px;flex-shrink:0;letter-spacing:.2px}
+  .secm-dest.rec{background:rgba(124,92,255,.14);color:#7c5cff;border:1px solid #7c5cff}
+  .secm-dest.dash{background:rgba(224,83,58,.13);color:#E0533A;border:1px solid #E0533A}
+  .secm-dest.nav{background:var(--bg-card);color:var(--ink-faint);border:1px solid var(--line)}
+  .secm-row .go{color:var(--ink-faint);font-size:13px;flex-shrink:0;margin-left:4px}
+  .secm-row.clk:hover .go{color:var(--accent)}
+  .secm-foot{font-size:10.5px;color:var(--ink-faint);margin-top:12px;padding-top:9px;border-top:1px solid var(--line);line-height:1.55}
   .secmodal .up{color:#e0556a} .secmodal .down{color:#3b82f6} .secmodal .flat{color:var(--ink-faint)}
 </style>
 </head>
@@ -539,15 +548,26 @@ function renderSectors(){ if(!MKT||!MKT.sectors) return; var s=MKT.sectors;
       +'<span><span class="sp '+mSignCls(x.changePct)+'">'+(x.changePct>0?'+':'')+x.changePct.toFixed(2)+'%</span>'
       +'<span class="sc">'+x.rise+'↑'+x.fall+'↓</span></span></div>'; }).join(''); }
 function setIndex(ix){ curIndex=ix; var tabs=document.querySelectorAll('.itab'); for(var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('on', tabs[i].getAttribute('data-ix')===ix); } renderIndexHead(); renderIndexChart(); }
+function recRunFor(code){ var best=null; for(var i=0;i<RUNLIST.length;i++){ var r=RUNLIST[i], ks=['leaders','activeBuy','surge','techRebound'];
+    for(var k=0;k<ks.length;k++){ var l=r[ks[k]]||[]; for(var j=0;j<l.length;j++){ if(l[j].code===code){ if(!best||r.id>best.runId) best={kind:l[j].kind,runId:r.id}; break; } } } } return best; }
+function dashCodes(){ return (MKT&&MKT.dashCodes)||[]; }
+function secDest(code){ if(recRunFor(code)) return {c:'rec',t:'추천'}; if(dashCodes().indexOf(code)>=0) return {c:'dash',t:'심층'}; return {c:'nav',t:'네이버'}; }
+function gotoSecStock(code){ var rec=recRunFor(code);
+  if(rec){ closeSector(); openStock(code, rec.kind, rec.runId); return; }
+  if(dashCodes().indexOf(code)>=0){ window.open('https://minjae9037.github.io/stock-dashboard/'+code+'/','_blank'); return; }
+  window.open('https://m.stock.naver.com/domestic/stock/'+code+'/total','_blank'); }
 function openSector(i){ if(!MKT||!MKT.sectors[i]) return; var x=MKT.sectors[i];
   var up=x.items.filter(function(s){return s.p>0;}), dn=x.items.filter(function(s){return s.p<0;}), fl=x.items.filter(function(s){return !s.p;});
-  function row(s){ return '<div class="secm-row"><span class="nm">'+s.n+'</span><span class="pc '+mSignCls(s.p)+'">'+(s.p>0?'+':'')+(s.p!=null?Number(s.p).toFixed(2):'0.00')+'%</span></div>'; }
+  function row(s){ var clk=s.c?' clk" onclick="gotoSecStock(\''+s.c+'\')':'"'; var d=s.c?secDest(s.c):null;
+    return '<div class="secm-row'+clk+'><span class="nm">'+s.n+(d?' <span class="secm-dest '+d.c+'">'+d.t+'</span>':'')+'</span>'
+      +'<span style="display:flex;align-items:center"><span class="pc '+mSignCls(s.p)+'">'+(s.p>0?'+':'')+(s.p!=null?Number(s.p).toFixed(2):'0.00')+'%</span>'+(s.c?'<span class="go">›</span>':'')+'</span></div>'; }
   var none='<div class="secm-row" style="color:var(--ink-faint);border:none">없음</div>';
   document.getElementById('secmodal-box').innerHTML=
     '<div class="secmodal-h"><h3>'+x.name+' <span class="'+mSignCls(x.changePct)+'" style="font-size:14px">'+(x.changePct>0?'+':'')+Number(x.changePct).toFixed(2)+'%</span></h3><button class="secmodal-x" onclick="closeSector()">✕</button></div>'
     +'<div style="font-size:11px;color:var(--ink-faint)">구성 '+x.items.length+'종목 · 상승 '+up.length+' · 하락 '+dn.length+(fl.length?' · 보합 '+fl.length:'')+' · 네이버 금융</div>'
     +'<div class="secm-cols"><div class="secm-col"><h4 class="up">📈 상승 '+up.length+'</h4>'+(up.map(row).join('')||none)+'</div>'
-    +'<div class="secm-col"><h4 class="down">📉 하락 '+dn.length+'</h4>'+(dn.map(row).join('')||none)+'</div></div>';
+    +'<div class="secm-col"><h4 class="down">📉 하락 '+dn.length+'</h4>'+(dn.map(row).join('')||none)+'</div></div>'
+    +'<div class="secm-foot">종목 클릭 → <b style="color:#7c5cff">추천</b> 보고서(분석 이력) · <b style="color:#E0533A">심층</b> 대시보드 · <b>네이버</b> 증권 순으로 연결</div>';
   document.getElementById('secmodal').classList.add('on');
 }
 function closeSector(){ var m=document.getElementById('secmodal'); if(m) m.classList.remove('on'); }
