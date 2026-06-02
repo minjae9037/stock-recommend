@@ -580,14 +580,14 @@ function renderMarket(){ if(!MKT){ var m=document.getElementById('market'); if(m
 var liveMap = {}, liveBusy=false, lastLive=0;
 function proxify(u){ return ['https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),'https://api.allorigins.win/raw?url='+encodeURIComponent(u)]; }
 function fetchJson(u){ var us=proxify(u); function t(i){ if(i>=us.length) return Promise.reject(); return fetch(us[i]).then(function(r){ if(!r.ok) throw 0; return r.json(); }).catch(function(){ return t(i+1); }); } return t(0); }
-function parsePrice(d){ var cp=(d.dealTrendInfos&&d.dealTrendInfos[0]&&d.dealTrendInfos[0].closePrice)||d.closePrice; var n=parseInt(String(cp).replace(/[^0-9]/g,''),10); return n>0?n:0; }
+function parsePrice(d){ var cp=d.closePrice||(d.dealTrendInfos&&d.dealTrendInfos[0]&&d.dealTrendInfos[0].closePrice); var n=parseInt(String(cp).replace(/[^0-9]/g,''),10); return n>0?n:0; }
 function runPool(items,worker,limit){ return new Promise(function(resolve){ var idx=0,active=0,done=0,n=items.length; if(!n)return resolve(); function next(){ while(active<limit&&idx<n){ var it=items[idx++];active++; worker(it).catch(function(){}).then(function(){ active--;done++; if(done>=n)resolve(); else next(); }); } } next(); }); }
 function allLiveCodes(){ var s={}; RUNLIST.forEach(function(r){ ['leaders','activeBuy','surge','techRebound'].forEach(function(k){ (r[k]||[]).forEach(function(it){ s[it.code]=1; }); }); }); return Object.keys(s); }
 function curPrice(code){ return liveMap[code] || (CURPX[code]||{}).price; }
 function refreshLive(){
   if(liveBusy) return Promise.resolve();
   liveBusy=true; var btn=document.getElementById('liveBtn'); if(btn){ btn.textContent='🔄 갱신 중…'; btn.classList.add('busy'); }
-  var sJob=runPool(allLiveCodes(), function(code){ return fetchJson('https://m.stock.naver.com/api/stock/'+code+'/integration').then(function(d){ var n=parsePrice(d); if(n>0) liveMap[code]=n; }); }, 5);
+  var sJob=runPool(allLiveCodes(), function(code){ return fetchJson('https://m.stock.naver.com/api/stock/'+code+'/basic').then(function(d){ var n=parsePrice(d); if(n>0) liveMap[code]=n; }); }, 5);
   var iJob = MKT ? Promise.all(['KOSPI','KOSDAQ'].map(function(c){ var key=c.toLowerCase(); return fetchJson('https://m.stock.naver.com/api/index/'+c+'/basic').then(function(d){ var v=parseFloat(String(d.closePrice).replace(/,/g,'')); var p=parseFloat(d.fluctuationsRatio); if(v>0&&MKT[key]){ MKT[key].value=v; if(!isNaN(p)) MKT[key].changePct=p; } }).catch(function(){}); })) : Promise.resolve();
   return Promise.all([sJob,iJob]).then(function(){
     liveBusy=false; lastLive=Date.now();
