@@ -146,7 +146,7 @@
   .bb-leg .l-mid{border-top-color:var(--gold);border-top-style:dashed}
   .bb-leg .l-band{width:14px;height:10px;border:1px solid var(--line);background:rgba(91,168,255,.10);border-top:none}
   /* 홈 3단 레이아웃 */
-  .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  .cols3{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
   .col{min-width:0}
   .col .sect-head{flex-wrap:wrap;gap:6px;margin-bottom:12px}
   .col .sect-title{font-size:14px}
@@ -154,6 +154,9 @@
   .sect-tag.tech{background:rgba(139,127,240,.14);color:#7A6FE0;border:1px solid #8B7FF0}
   .card.tech .c-rank{color:#7A6FE0}
   .d-verdict.tech{background:rgba(139,127,240,.14);color:#7A6FE0}
+  .sect-tag.leader{background:rgba(224,83,58,.13);color:#E0533A;border:1px solid #E0533A}
+  .card.leader .c-rank{color:#E0533A}
+  .d-verdict.leader{background:rgba(224,83,58,.13);color:#E0533A}
   .cols3 .card{padding:13px 14px;gap:10px;grid-template-columns:30px 1fr auto}
   .cols3 .c-rank{font-size:18px}
   .cols3 .c-name{font-size:15px}
@@ -161,7 +164,8 @@
   .cols3 .c-line{font-size:11.5px}
   .cols3 .c-score{font-size:18px}
   .cols3 .c-tgt{font-size:11.5px}
-  @media(max-width:820px){.cols3{grid-template-columns:1fr}.col .sect-note{display:inline}}
+  @media(max-width:1100px){.cols3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.cols3{grid-template-columns:1fr}.col .sect-note{display:inline}}
 
   /* 재무 건전성 */
   .hsec{margin-bottom:16px}
@@ -307,7 +311,7 @@
   <!-- HOME -->
   <section id="view-home" class="view active">
     <h1 class="hero-title">이번 주, 어떤 주식을 살까?</h1>
-    <p class="hero-sub">세 가지 전략으로 추린 추천입니다 — <b>① 적극매수</b>(1년·저평가+펀더멘털) · <b>② 저평가 가치주</b>(저PER/PBR·강한 재무·미급등) · <b>③ 기술적 반등</b>(저점 다지고 반등 임박). 이미 급등해 추격매수가 부담스러운 종목은 제외합니다. 카드를 누르면 종목 상세 분석이 열립니다.</p>
+    <p class="hero-sub">네 가지 전략으로 추린 추천입니다 — <b>🚀 시장 주도주</b>(상승 주도 대형 우량주) · <b>① 적극매수</b>(1년·저평가+펀더멘털) · <b>② 저평가 가치주</b>(저PER/PBR·전환 초입) · <b>③ 기술적 반등</b>(저점 다지고 반등 임박). 건전한 대형 주도주는 포함하되, 중소형 단기 급등의 추격매수는 지양합니다. 카드를 누르면 종목 상세 분석이 열립니다.</p>
     <div id="home-macro"></div>
 
     <!-- 추천 종목 검색 (적중도 추적) -->
@@ -328,6 +332,10 @@
     </div>
 
     <div class="cols3">
+      <div class="col">
+        <div class="sect-head"><span class="sect-tag leader">🚀 시장 주도주</span><span class="sect-title">상승 주도 대형주 TOP 5</span><span class="sect-note">대형 우량·강한 모멘텀</span></div>
+        <div class="cards" id="cards-leader"></div>
+      </div>
       <div class="col">
         <div class="sect-head"><span class="sect-tag buy">🟢 적극 매수</span><span class="sect-title">1년 상승 TOP 5</span><span class="sect-note">저평가+펀더멘털</span></div>
         <div class="cards" id="cards-buy"></div>
@@ -357,16 +365,16 @@
 const DISC = '⚠️ 본 보고서는 공개 데이터(네이버 금융·DART) 기반 정보 제공물이며 투자 권유가 아닙니다. 과거·지연 데이터에 근거하며 실시간 시세와 다를 수 있습니다. 모든 투자 판단과 책임은 이용자 본인에게 있습니다. 자동매매·주문 실행 기능은 없습니다.';
 const fmtNum = n => (n==null||n==='')?'-':Number(String(n).replace(/[^\d.\-]/g,'')).toLocaleString();
 function pct(v){ if(v==null) return '-'; const c=v>=0?'pos':'neg'; return `<span class="${c}">${v>=0?'+':''}${v}%</span>`; }
-function findItem(code,kind){ const T=REPORT.techRebound||[]; const lists = kind==='tech' ? [T,REPORT.surge,REPORT.activeBuy] : kind==='surge' ? [REPORT.surge,REPORT.activeBuy,T] : [REPORT.activeBuy,REPORT.surge,T]; for(const l of lists){ const it=l.find(x=>x.code===code); if(it) return it; } return null; }
+function findItem(code,kind){ const L=REPORT.leaders||[],T=REPORT.techRebound||[]; const lists = kind==='leader'?[L,REPORT.activeBuy,REPORT.surge,T]:kind==='tech' ? [T,REPORT.surge,REPORT.activeBuy,L] : kind==='surge' ? [REPORT.surge,REPORT.activeBuy,T,L] : [REPORT.activeBuy,REPORT.surge,T,L]; for(const l of lists){ const it=(l||[]).find(x=>x.code===code); if(it) return it; } return null; }
 function toggleAcc(el){ el.parentElement.classList.toggle('open'); }
 
 /* ── 분석 이력(RUNS) ── */
-const RUNLIST = (typeof RUNS!=='undefined' && RUNS.length) ? RUNS : [{id:REPORT.date.replace(/-/g,'')+'-0000',date:REPORT.date,time:'',label:REPORT.date,activeBuy:REPORT.activeBuy,surge:REPORT.surge,techRebound:REPORT.techRebound}];
+const RUNLIST = (typeof RUNS!=='undefined' && RUNS.length) ? RUNS : [{id:REPORT.date.replace(/-/g,'')+'-0000',date:REPORT.date,time:'',label:REPORT.date,leaders:REPORT.leaders,activeBuy:REPORT.activeBuy,surge:REPORT.surge,techRebound:REPORT.techRebound}];
 const CURPX = (typeof CURPRICE!=='undefined') ? CURPRICE : {};
 let curRunId=null;
 function latestRun(){ return RUNLIST[RUNLIST.length-1]; }
 function getRun(id){ return RUNLIST.find(r=>r.id===id) || latestRun(); }
-function findItemInRun(run,code,kind){ const map={buy:'activeBuy',surge:'surge',tech:'techRebound'}; const order=[map[kind]||'activeBuy','activeBuy','surge','techRebound']; const seen={}; for(const key of order){ if(seen[key])continue; seen[key]=1; const it=(run[key]||[]).find(x=>x.code===code); if(it) return it; } return null; }
+function findItemInRun(run,code,kind){ const map={leader:'leaders',buy:'activeBuy',surge:'surge',tech:'techRebound'}; const order=[map[kind]||'activeBuy','leaders','activeBuy','surge','techRebound']; const seen={}; for(const key of order){ if(seen[key])continue; seen[key]=1; const it=(run[key]||[]).find(x=>x.code===code); if(it) return it; } return null; }
 function renderRunButtons(){ const bar=document.getElementById('runbar'); if(!bar) return;
   bar.innerHTML = RUNLIST.slice().reverse().map(r=>`<button class="run-btn${r.id===curRunId?' on':''}" onclick="selectRun('${r.id}')"><span class="rb-d">${r.date.replace(/-/g,'.')}</span><span class="rb-t">${r.time||''}</span></button>`).join(''); }
 function selectRun(id){ curRunId=id; renderHome(); window.scrollTo({top:0,behavior:'smooth'}); }
@@ -376,7 +384,7 @@ function fmtChg(v){ if(v==null) return '-'; const c=v>=0?'pos':'neg'; return `<s
 function accBadge(a){ if(a==null) return '-'; const cls=a>=110?'over':a>=100?'hi':'lo'; return `<span class="acc-b2 ${cls}">${a}%</span>`; }
 function searchStock(q){ q=(q||'').trim().toLowerCase(); if(!q) return '';
   const byCode={};
-  RUNLIST.forEach(run=>['activeBuy','surge','techRebound'].forEach(key=>(run[key]||[]).forEach(it=>{
+  RUNLIST.forEach(run=>['leaders','activeBuy','surge','techRebound'].forEach(key=>(run[key]||[]).forEach(it=>{
     if(it.name.toLowerCase().indexOf(q)>=0 || it.code.indexOf(q)>=0){ (byCode[it.code]=byCode[it.code]||[]).push({run,it}); } })));
   const codes=Object.keys(byCode);
   if(!codes.length) return '<div class="search-empty">해당 종목의 추천 이력이 없습니다. (추천된 종목명·코드로 검색하세요)</div>';
@@ -385,7 +393,7 @@ function searchStock(q){ q=(q||'').trim().toLowerCase(); if(!q) return '';
     const name=arr[0].it.name; const cp=CURPX[code]||{}; const cur=cp.price;
     const rows=arr.map(h=>{ const rec=h.it.recPrice, tgt=h.it.target;
       const chg=(cur&&rec)?((cur-rec)/rec*100):null; const acc=(cur&&tgt)?Math.round(cur/tgt*100):null;
-      const kl={buy:'🟢 적극매수',surge:'💎 저평가가치',tech:'📉 기술반등'}[h.it.kind]||h.it.kind;
+      const kl={leader:'🚀 주도주',buy:'🟢 적극매수',surge:'💎 저평가가치',tech:'📉 기술반등'}[h.it.kind]||h.it.kind;
       return `<tr onclick="openStock('${code}','${h.it.kind}','${h.run.id}')">
         <td>${h.run.date.replace(/-/g,'.')} ${h.run.time||''}</td><td>${kl}</td>
         <td>${rec?rec.toLocaleString():'-'}원</td><td>${tgt?tgt.toLocaleString():'-'}원</td>
@@ -406,12 +414,13 @@ function card(it, kind, rank, runId){
     <div><div class="c-name">${it.name}<span class="c-mkt">${(REPORT.stocks[it.code]||{}).market||''}</span></div>
       <div class="c-line">${it.cat}</div></div>
     <div class="c-right"><div class="c-score">${it.score}<span class="c-su">점</span></div><div class="c-tgt up">${(it.guide&&it.guide.targetPct)||it.targetPct||''}</div>
-      <div class="c-meta">${kind==='buy'?'1년 목표':kind==='surge'?'가치 목표':'반등 목표'}</div></div>
+      <div class="c-meta">${kind==='leader'?'주도 목표':kind==='buy'?'1년 목표':kind==='surge'?'가치 목표':'반등 목표'}</div></div>
   </button>`;
 }
 function renderHome(){
   if(!curRunId) curRunId = latestRun().id;
   const run = getRun(curRunId);
+  document.getElementById('cards-leader').innerHTML = (run.leaders||[]).map((it,i)=>card(it,'leader',i+1,run.id)).join('');
   document.getElementById('cards-buy').innerHTML = (run.activeBuy||[]).map((it,i)=>card(it,'buy',i+1,run.id)).join('');
   document.getElementById('cards-surge').innerHTML = (run.surge||[]).map((it,i)=>card(it,'surge',i+1,run.id)).join('');
   document.getElementById('cards-tech').innerHTML = (run.techRebound||[]).map((it,i)=>card(it,'tech',i+1,run.id)).join('');
@@ -487,8 +496,8 @@ function openStock(code, kind, runId){
   const it = findItemInRun(run,code,kind) || findItem(code,kind); if(!it) return;
   const s = REPORT.stocks[code]||{}; const d=it.det||{}; const g=it.guide||{}; const h=s.health||{}; const pr=it.prob||{bull:30,base:50,bear:20};
   const isBuy = kind==='buy';
-  const horizon = kind==='buy'?'1년':kind==='surge'?'중기':'반등';
-  const kLabel = kind==='buy' ? {cls:'buy',txt:'🟢 적극 매수 (1년)'} : kind==='surge' ? {cls:'surge',txt:'💎 저평가 가치주'} : {cls:'tech',txt:'📉 기술적 반등 (저점)'};
+  const horizon = kind==='leader'?'주도':kind==='buy'?'1년':kind==='surge'?'중기':'반등';
+  const kLabel = kind==='leader' ? {cls:'leader',txt:'🚀 시장 주도주'} : kind==='buy' ? {cls:'buy',txt:'🟢 적극 매수 (1년)'} : kind==='surge' ? {cls:'surge',txt:'💎 저평가 가치주'} : {cls:'tech',txt:'📉 기술적 반등 (저점)'};
   const metricsHtml = `<div class="metrics">` + [
     ['현재가', s.price?s.price+'원':'-'],['PER (후행)', s.per||'-'],['PER (추정)', s.estPer||'-'],['PBR', s.pbr||'-'],
     ['배당수익률', s.div||'-'],['외인 비율', s.foreign||'-'],['52주 최고', s.hi52?s.hi52+'원':'-'],['52주 최저', s.lo52?s.lo52+'원':'-'],
