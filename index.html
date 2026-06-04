@@ -263,6 +263,15 @@
   .fx-pill.pill-pos{background:var(--green-bg);color:var(--green)}
   .fx-pill.pill-neu{background:rgba(140,148,160,.16);color:var(--ink-soft)}
   .fx-sub{font-size:12px;color:var(--ink-faint);font-weight:600;margin-top:5px;line-height:1.45}
+  /* 환율 급등 매수 보류 배너 */
+  .fx-caution{display:flex;gap:11px;align-items:flex-start;border-radius:11px;padding:12px 15px;margin-bottom:12px;border:1px solid}
+  .fx-caution.lv-strong{background:var(--red-bg);border-color:var(--red)}
+  .fx-caution.lv-soft{background:rgba(230,168,40,.12);border-color:var(--gold,#e6a828)}
+  .fxc-ic{font-size:20px;line-height:1.2}
+  .fxc-tx{font-size:14px;font-weight:800;color:var(--ink);line-height:1.4}
+  .fx-caution.lv-strong .fxc-tx b{color:var(--red)}
+  .fxc-sub{font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .fxc-sub b{color:var(--ink)}
   @media(max-width:640px){.macro{grid-template-columns:repeat(3,1fr)}.macro .mc.read{grid-column:1/-1}.flow-grid{grid-template-columns:repeat(2,1fr)}}
   .src-tag{font-size:12px;color:var(--ink-faint);font-weight:500}
 
@@ -649,7 +658,17 @@ function macroPanel(){ const m=REPORT.macro; if(!m) return '';
   } else {
     fxRead = m.fxUsd>=1450?'고환율 — 수출주 수혜·외국인 환차손 부담':m.fxUsd>=1300?'환율 보통':'원화 강세 — 외국인 유입 우호';
   }
+  // ★환율 급등 → 시장 전체 매수 보류/선별 배너 (레벨 아닌 상승 속도 기반)
+  let cautHtml='';
+  if(fr && fr.buyStance && fr.buyStance!=='적극'){
+    const warn = fr.cautionLevel==='경계';
+    cautHtml = `<div class="fx-caution ${warn?'lv-strong':'lv-soft'}">
+      <span class="fxc-ic">${warn?'🛑':'⚠️'}</span>
+      <span class="fxc-tx"><b>환율 ${fr.dir==='상승'?'급등':'상승'} — 매수 ${fr.buyStance==='관망'?'보류·관망':'선별·분할'} 권고</b><br>
+      <span class="fxc-sub">${fr.cautionNote||''}</span></span></div>`;
+  }
   return `<div class="panel"><div class="panel-t">🌐 시장 국면 <span class="src-tag">· 한국은행 ECOS · ${fmtYmd(m.asOf)} 기준</span></div>
+    ${cautHtml}
     <div class="macro">
       <div class="mc"><div class="mk">기준금리</div><div class="mv">${m.baseRate}%</div><div class="mt">한국은행</div></div>
       <div class="mc"><div class="mk">원/달러</div><div class="mv ${fxCls}">${Math.round(m.fxUsd).toLocaleString()}</div><div class="mt">${fxMt}</div></div>
