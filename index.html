@@ -256,7 +256,13 @@
   .macro .mk{font-size:12px;color:var(--ink-faint);font-weight:700;margin-bottom:3px}
   .macro .mv{font-size:18px;font-weight:800;font-family:var(--mono)}
   .macro .mt{font-size:12px;color:var(--ink-faint);margin-top:2px}
-  .macro .mc.read{display:flex;align-items:center;font-size:13.5px;color:var(--ink-soft);line-height:1.5;font-weight:600}
+  .macro .mc.read{display:flex;flex-direction:column;justify-content:center;font-size:13px;color:var(--ink-soft);line-height:1.5;font-weight:600}
+  .macro .mv.dn{color:var(--red)} .macro .mv.up{color:var(--green)}
+  .fx-pill{display:inline-block;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;margin:1px 3px 1px 0;white-space:nowrap}
+  .fx-pill.pill-neg{background:var(--red-bg);color:var(--red)}
+  .fx-pill.pill-pos{background:var(--green-bg);color:var(--green)}
+  .fx-pill.pill-neu{background:rgba(140,148,160,.16);color:var(--ink-soft)}
+  .fx-sub{font-size:12px;color:var(--ink-faint);font-weight:600;margin-top:5px;line-height:1.45}
   @media(max-width:640px){.macro{grid-template-columns:repeat(3,1fr)}.macro .mc.read{grid-column:1/-1}.flow-grid{grid-template-columns:repeat(2,1fr)}}
   .src-tag{font-size:12px;color:var(--ink-faint);font-weight:500}
 
@@ -628,13 +634,27 @@ function fscAmt(v){ if(v==null||v===''||Number(v)===0) return '-'; v=Number(v); 
 function shr(v){ if(v==null) return '-'; v=Number(v); const s=v>=0?'pos':'neg'; const a=Math.abs(v); const t=a>=1e8?(v/1e8).toFixed(1)+'억':a>=1e4?Math.round(v/1e4).toLocaleString()+'만':v.toLocaleString(); return `<span class="${s}">${v>=0?'+':''}${t}주</span>`; }
 function macroPanel(){ const m=REPORT.macro; if(!m) return '';
   const rateRead = m.baseRate<=2.5?'완화적 금리 — 성장·기술주 우호':'중립~긴축 — 가치·방어주 우위';
-  const fxRead = m.fxUsd>=1450?'고환율 — 수출주 수혜·외국인 환차손 부담':m.fxUsd>=1300?'환율 보통':'원화 강세 — 외국인 유입 우호';
+  const fr=m.fxRegime;
+  // ★환율 국면 신호(fxRegime) 우선, 없으면 레벨 기반 폴백
+  let fxRead, fxCls='', fxMt='매매기준율', pillHtml='';
+  if(fr){
+    const weak = fr.exporterTilt>0;   // 원화약세(수출 우대)
+    fxCls = weak?'dn':(fr.exporterTilt<0?'up':'');   // 환율↑(원화약세)=하락장 신호=빨강(dn), 강세=up
+    const benefit = weak?'수출주 수혜(반도체·자동차·조선·방산)':(fr.exporterTilt<0?'내수·수입주 수혜':'-');
+    const harm    = weak?'수입·항공·정유·외화부채주 부담':(fr.exporterTilt<0?'수출주 환차익 둔화':'-');
+    fxMt = `1년밴드 ${fr.band}% · 20일 ${fr.chg20d>0?'+':''}${fr.chg20d}%`;
+    const pc = fr.posture==='보수적'?'pill-neg':fr.posture==='공격적'?'pill-pos':'pill-neu';
+    pillHtml = `<span class="fx-pill ${fr.exporterTilt>0?'pill-neg':fr.exporterTilt<0?'pill-pos':'pill-neu'}">${fr.regime}</span> <span class="fx-pill ${pc}">시장 톤 ${fr.posture}</span>`;
+    fxRead = `${pillHtml}<div class="fx-sub">▲ ${benefit} · ▽ ${harm}</div>`;
+  } else {
+    fxRead = m.fxUsd>=1450?'고환율 — 수출주 수혜·외국인 환차손 부담':m.fxUsd>=1300?'환율 보통':'원화 강세 — 외국인 유입 우호';
+  }
   return `<div class="panel"><div class="panel-t">🌐 시장 국면 <span class="src-tag">· 한국은행 ECOS · ${fmtYmd(m.asOf)} 기준</span></div>
     <div class="macro">
       <div class="mc"><div class="mk">기준금리</div><div class="mv">${m.baseRate}%</div><div class="mt">한국은행</div></div>
-      <div class="mc"><div class="mk">원/달러</div><div class="mv">${Math.round(m.fxUsd).toLocaleString()}</div><div class="mt">매매기준율</div></div>
+      <div class="mc"><div class="mk">원/달러</div><div class="mv ${fxCls}">${Math.round(m.fxUsd).toLocaleString()}</div><div class="mt">${fxMt}</div></div>
       <div class="mc"><div class="mk">국고채 3년</div><div class="mv">${m.bond3y}%</div><div class="mt">시장금리</div></div>
-      <div class="mc read">${rateRead} · ${fxRead}</div>
+      <div class="mc read">${rateRead}<br>${fxRead}</div>
     </div></div>`; }
 function corpPanel(s){ const c=s.fsc&&s.fsc.corp, o=s.fsc&&s.fsc.official; if(!c&&!o) return '';
   const cells=[];
@@ -762,6 +782,7 @@ function openStock(code, kind, runId){
     ${discPanel(s)}
     ${scnHtml}
     <div class="panel"><div class="panel-t">투자 논거</div><div class="thesis">${it.thesis}</div>
+      ${it.fxNote?`<div class="risk" style="border-left-color:var(--gold)"><b>🌐 환율 민감도</b> · ${it.fxNote}</div>`:''}
       <div class="risk"><b>리스크</b> · ${it.risk}</div></div>
     ${newsHtml}
     <div style="margin-top:4px">
