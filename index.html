@@ -593,7 +593,11 @@ function renderMarket(){ if(!MKT){ var m=document.getElementById('market'); if(m
 /* ── 라이브 현재가 갱신 (로드·새로고침·탭 복귀·버튼) ──
    네이버가 github.io Origin을 CORS 차단 → 공개 프록시 경유(베스트 에포트). 실패 시 배포시점 값 유지. */
 var liveMap = {}, liveBusy=false, lastLive=0;
-function proxify(u){ return ['https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),'https://api.allorigins.win/raw?url='+encodeURIComponent(u)]; }
+// ★Cloudflare Worker 중계(배포 후 URL로 채움). 비어있으면 공개 프록시 폴백만 사용.
+var WORKER_BASE = 'https://naver-stock-proxy.minjae9037.workers.dev/proxy?url=';
+function proxify(u){ var a=[]; if(WORKER_BASE) a.push(WORKER_BASE+encodeURIComponent(u));
+  a.push('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u));
+  a.push('https://api.allorigins.win/raw?url='+encodeURIComponent(u)); return a; }
 function fetchJson(u){ var us=proxify(u); function t(i){ if(i>=us.length) return Promise.reject(); return fetch(us[i]).then(function(r){ if(!r.ok) throw 0; return r.json(); }).catch(function(){ return t(i+1); }); } return t(0); }
 function parsePrice(d){ var cp=d.closePrice||(d.dealTrendInfos&&d.dealTrendInfos[0]&&d.dealTrendInfos[0].closePrice); var n=parseInt(String(cp).replace(/[^0-9]/g,''),10); return n>0?n:0; }
 function runPool(items,worker,limit){ return new Promise(function(resolve){ var idx=0,active=0,done=0,n=items.length; if(!n)return resolve(); function next(){ while(active<limit&&idx<n){ var it=items[idx++];active++; worker(it).catch(function(){}).then(function(){ active--;done++; if(done>=n)resolve(); else next(); }); } } next(); }); }
@@ -611,6 +615,8 @@ function refreshLive(){
     var bm=document.getElementById('brand-meta'); if(bm) bm.textContent='분석일 '+REPORT.date+' · 현재가 '+hh+':'+mm+' 갱신';
     if(document.getElementById('view-home').classList.contains('active')) renderHome();
     renderIndexHead();
+    var ss=('0'+t.getSeconds()).slice(-2);
+    var ma=document.getElementById('masof'); if(ma) ma.textContent='실시간 '+hh+':'+mm+':'+ss+' 갱신';
   });
 }
 
@@ -883,6 +889,8 @@ document.addEventListener('DOMContentLoaded',()=>{ let t=null; try{t=localStorag
   refreshLive();   // 로드·새로고침(F5) 시 자동 현재가 갱신
 });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && Date.now()-lastLive>60000){ refreshLive(); } });
+// 탭이 보이는 동안 30초마다 자동 현재가·지수 갱신(실시간 유지)
+setInterval(function(){ if(document.visibilityState==='visible' && !liveBusy){ refreshLive(); } }, 30000);
 </script>
 </body>
 </html>
