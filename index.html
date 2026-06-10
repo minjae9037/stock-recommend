@@ -596,8 +596,7 @@ var liveMap = {}, liveBusy=false, lastLive=0;
 // ★Cloudflare Worker 중계(배포 후 URL로 채움). 비어있으면 공개 프록시 폴백만 사용.
 var WORKER_BASE = 'https://naver-stock-proxy.minjae9037.workers.dev/proxy?url=';
 function proxify(u){ var a=[]; if(WORKER_BASE) a.push(WORKER_BASE+encodeURIComponent(u));
-  a.push('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u));
-  a.push('https://api.allorigins.win/raw?url='+encodeURIComponent(u)); return a; }
+  a.push('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)); return a; }
 function fetchJson(u){ var us=proxify(u); function t(i){ if(i>=us.length) return Promise.reject(); return fetch(us[i]).then(function(r){ if(!r.ok) throw 0; return r.json(); }).catch(function(){ return t(i+1); }); } return t(0); }
 function parsePrice(d){ var cp=d.closePrice||(d.dealTrendInfos&&d.dealTrendInfos[0]&&d.dealTrendInfos[0].closePrice); var n=parseInt(String(cp).replace(/[^0-9]/g,''),10); return n>0?n:0; }
 function runPool(items,worker,limit){ return new Promise(function(resolve){ var idx=0,active=0,done=0,n=items.length; if(!n)return resolve(); function next(){ while(active<limit&&idx<n){ var it=items[idx++];active++; worker(it).catch(function(){}).then(function(){ active--;done++; if(done>=n)resolve(); else next(); }); } } next(); }); }
